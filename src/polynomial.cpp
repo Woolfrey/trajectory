@@ -5,6 +5,8 @@
 
 Polynomial::Polynomial(const nav_msgs::Path &input)
 {
+ 	/*** This constructor creates a polynomial object in Cartesian space.***/
+
 	this->n = input.poses.size() - 1;						// No. of trajectories = no. of points -1
 	this->frame_id = input.header.frame_id;						
 
@@ -69,6 +71,8 @@ Polynomial::Polynomial(const nav_msgs::Path &input)
 
 Polynomial::Polynomial(const trajectory::JointPath &input)
 {
+	/*** This constructor creates a polynomial trajectory object in joint space ***/
+
 	this->n = input.point.size() - 1;						// No. of trajecories = no. of points -1 
 	
 	if(this->n < 1)
@@ -103,6 +107,8 @@ Polynomial::Polynomial(const trajectory::JointPath &input)
 
 void Polynomial::genQuinticPolynomial(const double &t0, const double &tf)
 {
+	/*** This function generates the coefficients for a quintic polynomial. ***/
+
 	// Every dimension follows the same profile
 	this->a.resize(1,1);
 	this->b.resize(1,1);
@@ -110,6 +116,11 @@ void Polynomial::genQuinticPolynomial(const double &t0, const double &tf)
 
 	double dt = this->cartesianPath.poses[this->n].header.stamp.toSec()
 		  - this->cartesianPath.poses[0].header.stamp.toSec();
+
+	if(dt <= 0)
+	{
+		throw "Failed to create a polynomial trajectory object. The start time is greater than or equal to the finishing time.";
+	}
 
 	this->a(0,0) = 6*pow(dt,-5);
 	this->b(0,0) = -15*pow(dt,-4);
@@ -126,12 +137,21 @@ void Polynomial::genCubicSpline(Eigen::MatrixXd &points, Eigen::VectorXd &times)
 	B.setZero();
 
 	double dt = times(1) - times(0);
+	if(dt <= 0)
+	{
+		throw "Failed to create a polynomial trajectory object. Time t(1) is less than or equal to time t(0).";
+	}
+
 	A(0,0) = dt*dt/3;
 	A(0,1) = dt*dt/6;
 	B(0,0) = -1;
 	B(0,1) = 1;
 
 	dt = times(this->n) - times(this->n-1);
+	if(dt <= 0)
+	{
+		throw "Failed to create a polynomial trajectory object. The final time t(n) is greater than or equal to the previous time t(n-1).";
+	}
 	
 	A(this->n, this->n-1) 	= -1*dt*dt/6;
 	A(this->n, this->n) 	= -1*dt*dt/3;
@@ -142,6 +162,11 @@ void Polynomial::genCubicSpline(Eigen::MatrixXd &points, Eigen::VectorXd &times)
 	{
 		double dt1 = times(i) - times(i-1);
 		double dt2 = times(i+1) - times(i);
+		if(dt1 <= 0 || dt2 <= 0)
+		{
+			throw "Failed to create a polynomial trajectory object. The time steps are not in ascending order.";
+		}
+
 		A(i,i-1)   = dt1/6.0;
 		A(i,i)     = (dt1 + dt2)/3.0;
 		A(i,i+1)   = (dt2/6.0);
