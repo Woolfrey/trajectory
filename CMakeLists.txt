@@ -123,9 +123,11 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(${catkin_INCLUDE_DIRS})
-include_directories(${Eigen_INCLUDE_DIRS})
-include_directories(include)
+include_directories(
+ ${catkin_INCLUDE_DIRS}
+ ${Eigen_INCLUDE_DIRS}
+ include
+)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
