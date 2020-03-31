@@ -1,4 +1,3 @@
-#include "CommonFunctions.h"
 #include "Polynomial.h"
 #include "ros/ros.h"
 
